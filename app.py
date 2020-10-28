@@ -11,16 +11,28 @@ def close_db(error):
 	if hasattr(g, 'sqlite_db' ):
 		g.sqlite_db.close() 
 
+def get_current_user():
+	user = None #local variable
+	
+	if 'user' in session.keys(): #if user key in session 
+		user = session['user'] #ie "admin"
+		db = get_db() 
+		user_cursor = db.execute('SELECT id, name, password, expert, admin FROM users WHERE name = ?', [user])
+		user_result = user_cursor.fetchone() 
+		return user
+
+
 @app.route('/')
 def index():
-	user = None
-	if 'user' in session:
-		user = session['user']
+
+	user = get_current_user()
+
 
 	return render_template('home.html', user=user)
 
 @app.route('/register', methods=['GET','POST'])
 def register():
+	user = get_current_user()
 	if request.method == 'POST':
 		db = get_db()
 		hashed_password = generate_password_hash(request.form['password'], method='sha256')
@@ -32,14 +44,19 @@ def register():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
+	
+
+
+	user = get_current_user()
 	if request.method == "POST":
 		name = request.form['name']
 		password = request.form['password']
 		db = get_db()
 		user_cursor = db.execute("SELECT id, name, password FROM users WHERE name = ?", [name])
-		user_result = user_cursor.fetchone() 
+		user_result = user_cursor.fetchone()
 		if check_password_hash(user_result["password"], password):
 			session['user'] = user_result['name']
+			
 			return redirect(url_for('index'))
 		else:
 			return "<h6> The password is incorrect </h6>"
@@ -47,27 +64,32 @@ def login():
 
 @app.route('/question')
 def question():
-    return render_template('question.html')
+	user = get_current_user()
+	return render_template('question.html')
 
 @app.route('/answer')
 def answer():
-    return render_template('answer.html')
+	user = get_current_user()
+	return render_template('answer.html')
 
 @app.route('/ask')
 def ask():
-    return render_template('ask.html')
+	user = get_current_user()
+	return render_template('ask.html')
 
 @app.route('/unanswered')
 def unanswered():
-    return render_template('unanswered.html')
+	user = get_current_user()
+	return render_template('unanswered.html')
 
 @app.route('/users')
 def users():
-    return render_template('users.html')
+	user = get_current_user()
+	return render_template('users.html')
 
 @app.route('/logout')
 def logout():
-	session.pop('user', None)
+	session.pop('user', None) #removes (and returns) the key. Second arg is returned if key not found
 	return redirect(url_for('index'))
 if __name__ == '__main__':
-    app.run(debug=True)
+	app.run(debug=True)
