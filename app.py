@@ -1,7 +1,10 @@
-from flask import Flask, render_template, g, request 
+from flask import Flask, render_template, g, request , session, redirect, url_for
 from database import get_db
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
+
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.urandom(24)
 
 @app.teardown_appcontext
 def close_db(error):
@@ -10,7 +13,11 @@ def close_db(error):
 
 @app.route('/')
 def index():
-    return render_template('home.html')
+	user = None
+	if 'user' in session:
+		user = session['user']
+
+	return render_template('home.html', user=user)
 
 @app.route('/register', methods=['GET','POST'])
 def register():
@@ -32,7 +39,8 @@ def login():
 		user_cursor = db.execute("SELECT id, name, password FROM users WHERE name = ?", [name])
 		user_result = user_cursor.fetchone() 
 		if check_password_hash(user_result["password"], password):
-			return "<h6> The password is correct </h6>"
+			session['user'] = user_result['name']
+			return redirect(url_for('index'))
 		else:
 			return "<h6> The password is incorrect </h6>"
 	return render_template('login.html')
@@ -57,5 +65,9 @@ def unanswered():
 def users():
     return render_template('users.html')
 
+@app.route('/logout')
+def logout():
+	session.pop('user', None)
+	return redirect(url_for('index'))
 if __name__ == '__main__':
     app.run(debug=True)
