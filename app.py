@@ -19,9 +19,12 @@ def get_current_user():
 		db = get_db() 
 		user_cursor = db.execute('SELECT id, name, password, expert, admin FROM users WHERE name = ?', [user])
 		user_result = user_cursor.fetchone() 
-		return user
+		return user_result #record from the database
 
 
+
+
+@app.route('/home')
 @app.route('/')
 def index():
 
@@ -38,8 +41,9 @@ def register():
 		hashed_password = generate_password_hash(request.form['password'], method='sha256')
 		db.execute('insert into users (name, password, expert, admin) values (?,?,?,?)', [request.form['name'], hashed_password, '0','0'])
 		db.commit() 
+		session['user'] = request.form["name"]
 		print("succesfully added user")
-		return 'User Created'
+		return redirect(url_for('index'))
 	return render_template('register.html')
 
 @app.route('/login', methods=["GET", "POST"])
@@ -65,31 +69,38 @@ def login():
 @app.route('/question')
 def question():
 	user = get_current_user()
-	return render_template('question.html')
+	return render_template('question.html',user=user)
 
 @app.route('/answer')
 def answer():
 	user = get_current_user()
-	return render_template('answer.html')
+	return render_template('answer.html',user=user)
 
 @app.route('/ask')
 def ask():
 	user = get_current_user()
-	return render_template('ask.html')
+	return render_template('ask.html',user=user)
 
 @app.route('/unanswered')
 def unanswered():
 	user = get_current_user()
-	return render_template('unanswered.html')
+	return render_template('unanswered.html',user=user)
 
 @app.route('/users')
 def users():
 	user = get_current_user()
-	return render_template('users.html')
+	db = get_db()
+	users_cursor = db.execute('SELECT id, name, expert, admin FROM users')
+	users_results = users_cursor.fetchall() # list of users sqlite row object
+	print(list(users_results[1]))
+
+	return render_template('users.html',user=user, users=users_results)
 
 @app.route('/logout')
 def logout():
 	session.pop('user', None) #removes (and returns) the key. Second arg is returned if key not found
 	return redirect(url_for('index'))
+
+
 if __name__ == '__main__':
 	app.run(debug=True)
