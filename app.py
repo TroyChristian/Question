@@ -92,7 +92,7 @@ def users():
 	db = get_db()
 	users_cursor = db.execute('SELECT id, name, expert, admin FROM users')
 	users_results = users_cursor.fetchall() # list of users sqlite row object
-	print(list(users_results[1]))
+	
 
 	return render_template('users.html',user=user, users=users_results)
 
@@ -100,6 +100,16 @@ def users():
 def logout():
 	session.pop('user', None) #removes (and returns) the key. Second arg is returned if key not found
 	return redirect(url_for('index'))
+
+@app.route('/promote<user_id>')
+def promote(user_id):
+	db = get_db()
+	user_cursor = db.execute('UPDATE users SET expert = 1 WHERE id = ?', [user_id])
+	print("User promoted")
+	db.commit()
+	return redirect(url_for('users'))
+
+
 
 
 if __name__ == '__main__':
