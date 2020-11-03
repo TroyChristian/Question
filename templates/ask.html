@@ -72,11 +72,11 @@
                     <label for="select" class="col-lg-2 control-label">Expert</label>
                     <div class="col-lg-10">
                       <select class="form-control" id="select">
-                        <option>Expert 1</option>
-                        <option>Expert 2</option>
-                        <option>Expert 3</option>
-                        <option>Expert 4</option>
-                        <option>Expert 5</option>
+                        {% if experts %} 
+                        {% for expert in experts %}
+                        <option> expert </option>
+                        {% endfor %}
+                        {% endif %}
                       </select>
                     </div>
                   </div>

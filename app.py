@@ -79,7 +79,15 @@ def answer():
 @app.route('/ask')
 def ask():
 	user = get_current_user()
-	return render_template('ask.html',user=user)
+	experts = [] #hold the names of our experts
+	# Get experts to populate experts form selection
+	db = get_db()
+	experts_cur = db.execute("SELECT name from users WHERE expert = 1")
+	expert_rows = experts_cur.fetchall() # results in list of sql lite row objects
+	
+	for i in expert_rows: #iterate over sqllite row object array, grabbing name property from sqlite row object
+		experts.append(i)
+	return render_template('ask.html',user=user, experts=experts)
 
 @app.route('/unanswered')
 def unanswered():
@@ -90,7 +98,7 @@ def unanswered():
 def users():
 	user = get_current_user()
 	db = get_db()
-	users_cursor = db.execute('SELECT id, name, expert, admin FROM users')
+	users_cursor = db.execute('SELECT id, name, expert, admin FROM users') 
 	users_results = users_cursor.fetchall() # list of users sqlite row object
 	
 
@@ -101,11 +109,24 @@ def logout():
 	session.pop('user', None) #removes (and returns) the key. Second arg is returned if key not found
 	return redirect(url_for('index'))
 
-@app.route('/promote<user_id>')
+@app.route('/promote<user_id>') #user id passed in url and to promote func
 def promote(user_id):
-	db = get_db()
+	db = get_db() # grab a cursor
+	#Check if user is already an expert
+	expert_cur = db.execute('SELECT expert FROM users WHERE id = ?', [user_id]) 
+	is_expert = expert_cur.fetchone() # Results in a  sqlite Row object behaves like a  tuple
+	
+
+
+	if is_expert["expert"] == 1:
+		user_cursor = db.execute('UPDATE users SET expert = 0 WHERE id = ?', [user_id])
+		print("User demoted and is no longer an expert")
+		db.commit()
+		return redirect(url_for('users'))
+	
+
 	user_cursor = db.execute('UPDATE users SET expert = 1 WHERE id = ?', [user_id])
-	print("User promoted")
+	print("User promoted to expert")
 	db.commit()
 	return redirect(url_for('users'))
 
