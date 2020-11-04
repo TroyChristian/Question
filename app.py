@@ -76,18 +76,23 @@ def answer():
 	user = get_current_user()
 	return render_template('answer.html',user=user)
 
-@app.route('/ask')
+@app.route('/ask', methods=['GET', 'POST'])
 def ask():
+	if request.method == 'POST':
+		print(request.method)
+		return "<h6>Question: {}, expert id: {} </h6>".format(request.form['question'], request.form['expert'])
 	user = get_current_user()
-	experts = [] #hold the names of our experts
+	
+
 	# Get experts to populate experts form selection
 	db = get_db()
-	experts_cur = db.execute("SELECT name from users WHERE expert = 1")
+	experts_cur = db.execute("SELECT id, name from users WHERE expert = 1")
 	expert_rows = experts_cur.fetchall() # results in list of sql lite row objects
 	
-	for i in expert_rows: #iterate over sqllite row object array, grabbing name property from sqlite row object
-		experts.append(i)
-	return render_template('ask.html',user=user, experts=experts)
+	
+
+	print(request.method)
+	return render_template('ask.html',user=user, experts=expert_rows)
 
 @app.route('/unanswered')
 def unanswered():
