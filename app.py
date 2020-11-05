@@ -74,30 +74,44 @@ def question():
 @app.route('/answer')
 def answer():
 	user = get_current_user()
-	return render_template('answer.html',user=user)
+	db = get_db()
+	questions_for_expert_cur = db.execute("SELECT question_text, asked_by_id FROM questions WHERE expert_id = ?", [user["id"]] )
+	#questions_for_expert_cur = db.fetchall()
+	print(questions_for_expert_cur)
+
+	return render_template('answer.html',user=user, questions=questions_for_expert_cur)
 
 @app.route('/ask', methods=['GET', 'POST'])
 def ask():
-	if request.method == 'POST':
-		print(request.method)
-		return "<h6>Question: {}, expert id: {} </h6>".format(request.form['question'], request.form['expert'])
+
+
 	user = get_current_user()
-	
+	db = get_db()
+	if request.method == 'POST':
+			
+		db.execute("INSERT INTO questions (question_text, asked_by_id, expert_id) VALUES (?,?,?)", [request.form['question'], user['id'], request.form['expert']])
+		db.commit()
+		return redirect(url_for('index')) 
+
 
 	# Get experts to populate experts form selection
-	db = get_db()
+	
 	experts_cur = db.execute("SELECT id, name from users WHERE expert = 1")
 	expert_rows = experts_cur.fetchall() # results in list of sql lite row objects
 	
 	
 
-	print(request.method)
+	
 	return render_template('ask.html',user=user, experts=expert_rows)
 
 @app.route('/unanswered')
 def unanswered():
 	user = get_current_user()
-	return render_template('unanswered.html',user=user)
+	db = get_db()
+	questions_for_expert_cur = db.execute("SELECT question_text, asked_by_id FROM questions WHERE expert_id = ?", [user["id"]] )
+	#questions_for_expert_cur = db.fetchall()
+	print(questions_for_expert_cur)
+	return render_template('unanswered.html',user=user, questions=questions_for_expert_cur)
 
 @app.route('/users')
 def users():
